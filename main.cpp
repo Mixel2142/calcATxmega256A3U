@@ -423,6 +423,13 @@ ISR(TCC0_OVF_vect)
 {
 		DrawZnakomesto();
 
+		keyCounter++;
+		if(keyCounter > keyDelay)
+		{
+			isCanPressKey = true;
+			keyCounter = 0;
+		}
+			
 		if(isKeyPres())
 		{
 			if(isCanPressKey)
@@ -431,25 +438,11 @@ ISR(TCC0_OVF_vect)
 				pressKey = true;
 				keyCounter = 0;
 			}
-			
-			keyCounter++;
-			if(keyCounter > keyDelay)
-			{
-				isCanPressKey = true;
-				keyCounter = 0;
-			}
-			
+	
 			powerCounter = 0;
 		}
 		else
 		{
-			keyCounter++;
-			if(keyCounter > keyDelay)
-			{
-				isCanPressKey = true;
-				keyCounter = 0;
-			}
-
 			powerCounter++;
 			if(powerCounter > powerStop)
 			{
