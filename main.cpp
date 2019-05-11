@@ -3,11 +3,11 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
-#define Plus 0b00010001
-#define Sub  0b00100001
-#define Did  0b10000001
-#define Mul  0b01000001
-#define Equ  0b00010010
+#define Plus 0
+#define Sub  1
+#define Did  2
+#define Mul  3
+#define Equ  4
 #define i 0b11111011
 #define n 0b10101011
 #define f 0b10001110
@@ -46,14 +46,6 @@ const uint8_t numb[10] = {
 	0b10000000, // 8
 	0b10010000  // 9
 };
-
-typedef void ( *. )(uint8_t* ,float* );
-
-const VoidFunPtr keyBoard[4][4] = {
-	{Did_f,key9,key8,key7},
-	{Mul_f,key6,key5,key4},
-	{Sub_f,key3,key2,key1},
-	{Plus_f,Equ_f,key0,On_C_f}};
 	
 // разрешает обработку кнопки
 bool isCanPressKey = true;
@@ -74,12 +66,11 @@ uint16_t powerCounter = 0;
 // хранит в себе данные для вывода на дисплей
 uint8_t dispVal[4] = {255,255,255,numb[0]}; 
 
-// переменные для хранения расчетов
+// переменные для хранения/записи/расчетов вычислений
 float numberOne_f = 0.0;
-int32_t numberOne_i = 0;
 float numberTwo = 0.0;
-uint16_t digitsAfterPoint = 0;
 
+// кодирует 10-е число в 2-е
 uint8_t coder(uint8_t code)
 {
 	code -=1;
@@ -168,7 +159,7 @@ void key9(uint8_t* sign,float* number)
 	*number = *number * 10 + 9;
 }
 
-void On_C_f(uint8_t* sign,float* number)
+void On_C_Board(uint8_t* sign,float* number)
 {
 	if((*sign) == Equ)
 	{
@@ -190,7 +181,7 @@ void On_C_f(uint8_t* sign,float* number)
 	*number = num_i;
 }
 
-void Plus_f(uint8_t* sign,float* number)
+void Plus_Board(uint8_t* sign,float* number)
 {
 	writeTo = NumTwo;
 	*sign = Plus;
@@ -201,7 +192,7 @@ void Plus_f(uint8_t* sign,float* number)
 	_delay_ms(delaySign);
 }
 
-void Sub_f(uint8_t* sign,float* number)
+void Sub_Board(uint8_t* sign,float* number)
 {
 	writeTo = NumTwo;
 	*sign = Sub;
@@ -212,7 +203,7 @@ void Sub_f(uint8_t* sign,float* number)
 	_delay_ms(delaySign);
 }
 
-void Did_f(uint8_t* sign,float* number)
+void Did_Board(uint8_t* sign,float* number)
 {
 	writeTo = NumTwo;
 	*sign = Did;
@@ -223,7 +214,7 @@ void Did_f(uint8_t* sign,float* number)
 	_delay_ms(delaySign);
 }
 
-void Mul_f(uint8_t* sign,float* number)
+void Mul_Board(uint8_t* sign,float* number)
 {
 	writeTo = NumTwo;
 	*sign = Mul;
@@ -234,30 +225,46 @@ void Mul_f(uint8_t* sign,float* number)
 	_delay_ms(delaySign);
 }
 
-void Equ_f(uint8_t* sign,float* number)
+void Equ_Board(uint8_t* sign,float* number)
 {
 	writeTo = NumOne;
+	
 	dispVal[0] = 255;
 	dispVal[1] = e;
 	dispVal[2] = q;
 	dispVal[3] = u;
 	_delay_ms(delaySign);
-	switch (*sign)
-	{
-		case Plus:
-		numberOne_f += numberTwo;
-		break;
+	
+	masSign[*sign]();
+	
+	*sign = Equ;
+	
+	numberTwo = 0.0;
+}
 
-		case Sub:
-		numberOne_f -= numberTwo;
-		break;
+typedef void ( *VoidFunPtrBoard )(uint8_t* ,float* );
 
-		case Mul:
-		numberOne_f *= numberTwo;
-		break;
+const VoidFunPtrBoard keyBoard[4][4] = {
+	{Did_Board,key9,key8,key7},
+	{Mul_Board,key6,key5,key4},
+	{Sub_Board,key3,key2,key1},
+	{Plus_Board,Equ_Board,key0,On_C_Board}};
+	
 
-		case Did:
-		if(numberTwo == 0.0)
+
+void Plus_Sign()
+{
+	numberOne_f += numberTwo;
+}
+
+void Sub_Sign()
+{
+	numberOne_f -= numberTwo;
+}
+
+void Did_Sign()
+{
+	if(numberTwo == 0.0)
 		{
 			inf = true;
 			numberOne_f = 0.0;
@@ -267,17 +274,23 @@ void Equ_f(uint8_t* sign,float* number)
 		{
 			numberOne_f /= numberTwo;
 		}
-		break;
-
-		default:
-		break;
-	}
-	*sign = Equ;
-
-	numberTwo = 0.0;
 }
 
-uint8_t toValPortD(uint8_t num)
+void Mul_Sign()
+{
+	numberOne_f *= numberTwo;
+}
+
+void Equ_Sign()
+{
+	
+}
+
+typedef void ( *VoidFunPtrSign )(uint8_t* ,float* );
+
+const VoidFunPtrSign masSign[5] = {Plus_Sign, Sub_Sign, Did_Sign, Mul_Sign, Equ_Sign};
+	
+uint8_t makeDispVal(uint8_t num)
 {
 	return( numb[ num ] );
 }
@@ -297,6 +310,7 @@ uint8_t getLength(int32_t num)
 	return result;
 }
 
+// модуль числа
 int32_t mod(int32_t num)
 {
 	return num < 0 ? num * (-1) : num;
@@ -316,8 +330,12 @@ int32_t pow_dec(uint8_t pw)
 	return pw == 0 ? 1 : num;
 }
 
+// заполняет массив dispVal[]
 void makeDisplayValue()
 {	
+	int32_t numberOne_i = numberOne_f;
+	uint16_t digitsAfterPoint = mod((numberOne_f - numberOne_i) * 1000);
+	
 	if(writeTo == NumOne)
 	{
 		// при делении на 0
@@ -340,7 +358,7 @@ void makeDisplayValue()
 					{
 						for(uint8_t j = 0; j < lenNumberOne; j++)
 						{
-							dispVal[3-j] = toValPortD(mod(numberOne_i/pow_dec(j)%10));
+							dispVal[3-j] = makeDispVal(mod(numberOne_i/pow_dec(j)%10));
 						}
 						
 						dispVal[3-lenNumberOne] = minus;
@@ -349,14 +367,14 @@ void makeDisplayValue()
 					{
 						for(uint8_t j = 0; j < lenNumberOne; j++)
 						{
-							dispVal[lenNumberOne-j] = toValPortD(mod(numberOne_i/pow_dec(j)%10));
+							dispVal[lenNumberOne-j] = makeDispVal(mod(numberOne_i/pow_dec(j)%10));
 						}
 						
 						dispVal[lenNumberOne] &= Point;
 						
 						for(uint8_t j = 0; j < 4-lenNumberOne; j++)
 						{
-							dispVal[lenNumberOne+j+1] = toValPortD(digitsAfterPoint/pow_dec(getLength(digitsAfterPoint)-j-1)%10);
+							dispVal[lenNumberOne+j+1] = makeDispVal(digitsAfterPoint/pow_dec(getLength(digitsAfterPoint)-j-1)%10);
 						}
 						
 						dispVal[0] = minus;
@@ -364,9 +382,9 @@ void makeDisplayValue()
 				}
 				else
 				{
-					dispVal[3] = toValPortD(lenNumberOne-1);
+					dispVal[3] = makeDispVal(lenNumberOne-1);
 					dispVal[2] = e;
-					dispVal[1] = toValPortD(mod(numberOne_i/pow_dec(lenNumberOne-1)%10));
+					dispVal[1] = makeDispVal(mod(numberOne_i/pow_dec(lenNumberOne-1)%10));
 					dispVal[0] = minus;
 				}
 			}
@@ -378,29 +396,29 @@ void makeDisplayValue()
 					{
 						for(uint8_t j = 0; j < lenNumberOne; j++)
 						{
-							dispVal[3-j] = toValPortD(numberOne_i/pow_dec(j)%10);
+							dispVal[3-j] = makeDispVal(numberOne_i/pow_dec(j)%10);
 						}
 					}
 					else
 					{
 						for(uint8_t j = 0; j < lenNumberOne; j++)
 						{
-							dispVal[lenNumberOne-j-1] = toValPortD(numberOne_i/pow_dec(j)%10);
+							dispVal[lenNumberOne-j-1] = makeDispVal(numberOne_i/pow_dec(j)%10);
 						}
 						
 						dispVal[lenNumberOne-1] &= Point;
 						
 						for(uint8_t j = 0; j < 4-lenNumberOne; j++)
 						{
-							dispVal[lenNumberOne+j] = toValPortD(digitsAfterPoint/pow_dec(getLength(digitsAfterPoint)-j-1)%10);
+							dispVal[lenNumberOne+j] = makeDispVal(digitsAfterPoint/pow_dec(getLength(digitsAfterPoint)-j-1)%10);
 						}
 					}
 				}
 				else
 				{	
-					dispVal[3] = toValPortD(lenNumberOne-1);
+					dispVal[3] = makeDispVal(lenNumberOne-1);
 					dispVal[2] = e;
-					dispVal[1] = toValPortD(numberOne_i/pow_dec(lenNumberOne-1)%10);
+					dispVal[1] = makeDispVal(numberOne_i/pow_dec(lenNumberOne-1)%10);
 					dispVal[0] = 255;
 				}
 			}
@@ -414,11 +432,12 @@ void makeDisplayValue()
 
 		for(uint8_t j = 0; j < lenNumberTwo; j++)
 		{
-			dispVal[3-j] = toValPortD(numberTwo_i/pow_dec(j)%10);
+			dispVal[3-j] = makeDispVal(numberTwo_i/pow_dec(j)%10);
 		}
 	}
 }
 
+// прерывания по переполнению таймера ТСС0
 ISR(TCC0_OVF_vect)
 {
 		DrawZnakomesto();
@@ -509,10 +528,7 @@ int main(void)
 				{
 					keyBoard[col][row]( &sign, &numberTwo);
 				}
-
-				numberOne_i = numberOne_f;
-				digitsAfterPoint = mod((numberOne_f - numberOne_i) * 1000);
-
+				
 				makeDisplayValue();
 			}
 			pressKey = false;
