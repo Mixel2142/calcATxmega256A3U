@@ -92,15 +92,9 @@ void Mul_Sign()
 	numberOne *= numberTwo;
 }
 
-// Ќужен дл€ того, чтобы не вышли за пределы массива  masSign
-void Equ_Sign()
-{
-}
-
-
 typedef void ( *VoidFunPtrSign )();
 
-const VoidFunPtrSign masSign[5] = {Plus_Sign, Sub_Sign, Did_Sign, Mul_Sign, Equ_Sign};
+const VoidFunPtrSign masSign[4] = {Plus_Sign, Sub_Sign, Did_Sign, Mul_Sign};
 
 void key0(uint8_t* sign,float* number)
 {
@@ -154,13 +148,13 @@ void key9(uint8_t* sign,float* number)
 
 void On_C_Board(uint8_t* sign,float* number)
 {
-	if((*sign) == Equ)
+	if(*sign == Equ)
 	{
 		inf	= false;
 		numberTwo = 0.0;
 		numberOne = 0.0;
 		writeTo = NumOne;
-		(*sign) = 0;
+		*sign = Equ;
 	}
 	
 	if(*number == 0.0)
@@ -221,17 +215,15 @@ void Mul_Board(uint8_t* sign,float* number)
 void Equ_Board(uint8_t* sign,float* number)
 {
 	writeTo = NumOne;
-	
 	dispVal[0] = Nun;
 	dispVal[1] = e;
 	dispVal[2] = q;
 	dispVal[3] = u;
 	_delay_ms(delaySign);
 	
-	masSign[*sign]();
+	if(*sign != Equ) masSign[*sign]();
 	
 	*sign = Equ;
-	
 	numberTwo = 0.0;
 }
 
