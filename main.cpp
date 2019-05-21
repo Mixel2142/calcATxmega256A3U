@@ -30,9 +30,6 @@
 // кол-во итераций в ISR которое нужно для срабатывания нажатия клавиши (работает совместно с keyCounter)
 const uint8_t keyDelay = 70;
 
-// 1/195 => 0.0051 сек * 40к = 205 сек (работает совместно с powerCounter)
-const uint16_t powerStop = 40000;
-
 // задержка на индикацию нажатого действия (* / - + =)
 const uint8_t delaySign = 50;
 
@@ -92,9 +89,15 @@ void Mul_Sign()
 	numberOne *= numberTwo;
 }
 
+// Нужен для того, чтобы не вышли за пределы массива  masSign
+void Equ_Sign()
+{
+}
+
+
 typedef void ( *VoidFunPtrSign )();
 
-const VoidFunPtrSign masSign[4] = {Plus_Sign, Sub_Sign, Did_Sign, Mul_Sign};
+const VoidFunPtrSign masSign[5] = {Plus_Sign, Sub_Sign, Did_Sign, Mul_Sign, Equ_Sign};
 
 void key0(uint8_t* sign,float* number)
 {
@@ -148,13 +151,13 @@ void key9(uint8_t* sign,float* number)
 
 void On_C_Board(uint8_t* sign,float* number)
 {
-	if(*sign == Equ)
+	if((*sign) == Equ)
 	{
 		inf	= false;
 		numberTwo = 0.0;
 		numberOne = 0.0;
 		writeTo = NumOne;
-		*sign = Equ;
+		(*sign) = 0;
 	}
 	
 	if(*number == 0.0)
@@ -215,15 +218,17 @@ void Mul_Board(uint8_t* sign,float* number)
 void Equ_Board(uint8_t* sign,float* number)
 {
 	writeTo = NumOne;
+	
 	dispVal[0] = Nun;
 	dispVal[1] = e;
 	dispVal[2] = q;
 	dispVal[3] = u;
 	_delay_ms(delaySign);
 	
-	if(*sign != Equ) masSign[*sign]();
+	masSign[*sign]();
 	
 	*sign = Equ;
+	
 	numberTwo = 0.0;
 }
 
@@ -396,7 +401,7 @@ bool isKeyPres()
 uint8_t coder(uint8_t code)
 {
 	code -=1;
-	code = code -((code >> 1) & 0b01010101);
+	code = code - ((code >> 1) & 0b01010101);
 	return (code & 0b00110011) + ((code >> 2) & 0b00110011);
 }
 
@@ -411,19 +416,14 @@ void DrawZnakomesto()
 	PORTC_OUT = dispVal[coder(PORTD.DIR)];
 }
 
-
-
 // прерывания по переполнению таймера ТСС0
 ISR(TCC0_OVF_vect)
 {
 	// разрешает обработку кнопки
 	static bool isCanPressKey = true;
 
-	// счётчик кол-ва нажатия в ISR
+	// счётчик кол-ва пропущ-х нажатий
 	static uint8_t keyCounter = 0;
-
-	// счётчик для переключения режима питания МК
-	static uint16_t powerCounter = 0;
 
 	DrawZnakomesto();
 
@@ -434,26 +434,11 @@ ISR(TCC0_OVF_vect)
 		keyCounter = 0;
 	}
 	
-	if(isKeyPres())
+	if(isKeyPres() && isCanPressKey)
 	{
-		if(isCanPressKey)
-		{
-			isCanPressKey = false;
-			pressKey = true;
-			keyCounter = 0;
-		}
-		
-		powerCounter = 0;
-	}
-	else
-	{
-		powerCounter++;
-		if(powerCounter > powerStop)
-		{
-			powerCounter = 0;
-			keyCounter = 0;
-			//power = false; включить мод сна
-		}
+		isCanPressKey = false;
+		pressKey = true;
+		keyCounter = 0;
 	}
 }
 
@@ -545,6 +530,3 @@ int main(void)
 		}//if pressKey
 	}
 }
-
-
-
