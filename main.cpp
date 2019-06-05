@@ -514,14 +514,12 @@ int main(void)
 				
 				if(numberOne > 9999.0)
 				{
-					numberOne -= static_cast< int32_t >( numberOne ) % 10;
-					numberOne /= 10;
+					numberOne = static_cast< int32_t >( numberOne ) % 10000;
 				}
 				
 				if(numberTwo > 9999.0)
 				{
-					numberTwo -= static_cast< int32_t >( numberTwo ) % 10;
-					numberTwo /= 10;
+					numberTwo = static_cast< int32_t >( numberTwo ) % 10000;
 				}
 			
 				makeDisplayValue();
