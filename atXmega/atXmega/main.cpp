@@ -89,15 +89,9 @@ void Mul_Sign()
 	numberOne *= numberTwo;
 }
 
-// Ќужен дл€ того, чтобы не вышли за пределы массива  masSign
-void Equ_Sign()
-{
-}
-
-
 typedef void ( *VoidFunPtrSign )();
 
-const VoidFunPtrSign masSign[5] = {Plus_Sign, Sub_Sign, Did_Sign, Mul_Sign, Equ_Sign};
+const VoidFunPtrSign masSign[4] = {Plus_Sign, Sub_Sign, Did_Sign, Mul_Sign};
 
 void key0(uint8_t* sign,float* number)
 {
@@ -225,14 +219,17 @@ void Equ_Board(uint8_t* sign,float* number)
 	dispVal[3] = u;
 	_delay_ms(delaySign);
 	
-	masSign[*sign]();
+	if(*sign != Equ)
+	{	
+		masSign[*sign]();
+	}
 	
 	*sign = Equ;
 	
 	numberTwo = 0.0;
 }
 
-typedef void ( *VoidFunPtrBoard )(uint8_t* ,float* );
+typedef void ( *VoidFunPtrBoard )(uint8_t*, float* );
 
 const VoidFunPtrBoard keyBoard[4][4] = {
 	{Did_Board,key9,key8,key7},
@@ -270,14 +267,14 @@ int32_t mod(int32_t num)
 int32_t pow_dec(uint8_t pw)
 {
 	uint8_t counter = 1;
-	int32_t num = 10;
+	int32_t dec = 10;
 	while(pw != counter)
 	{
-		num *= 10;
+		dec *= 10;
 		counter++;
 	}
 	
-	return pw == 0 ? 1 : num;
+	return pw == 0 ? 1 : dec;
 }
 
 // заполн€ет массив dispVal[]
@@ -291,7 +288,7 @@ void makeDisplayValue()
 	if(writeTo == NumOne)
 	{
 		int32_t numberOne_i = numberOne;
-		uint16_t digitsAfterPoint = mod((numberOne - numberOne_i) * 1000);
+		uint16_t digitsAfterPoint = mod((numberOne - numberOne_i) * 1000); // вз€ть 3 цифры после зап€той (умножить на 1000)
 
 		// при делении на 0
 		if(inf)
@@ -313,23 +310,23 @@ void makeDisplayValue()
 					{
 						for(uint8_t j = 0; j < lenNumberOne; j++)
 						{
-							dispVal[3-j] = makeDispVal(mod(numberOne_i/pow_dec(j)%10));
+							dispVal[3 - j] = makeDispVal(mod(numberOne_i / pow_dec(j) % 10));
 						}
 						
-						dispVal[3-lenNumberOne] = minus;
+						dispVal[3 - lenNumberOne] = minus;
 					}
 					else
 					{
 						for(uint8_t j = 0; j < lenNumberOne; j++)
 						{
-							dispVal[lenNumberOne-j] = makeDispVal(mod(numberOne_i/pow_dec(j)%10));
+							dispVal[lenNumberOne-j] = makeDispVal(mod(numberOne_i / pow_dec(j) % 10));
 						}
 						
 						dispVal[lenNumberOne] &= Point;
 						
-						for(uint8_t j = 0; j < 4-lenNumberOne; j++)
+						for(uint8_t j = 0; j < 4 - lenNumberOne; j++)
 						{
-							dispVal[lenNumberOne+j+1] = makeDispVal(digitsAfterPoint/pow_dec(getLength(digitsAfterPoint)-j-1)%10);
+							dispVal[lenNumberOne + j + 1] = makeDispVal(digitsAfterPoint / pow_dec(getLength(digitsAfterPoint) - j - 1) % 10);
 						}
 						
 						dispVal[0] = minus;
@@ -337,9 +334,9 @@ void makeDisplayValue()
 				}
 				else
 				{
-					dispVal[3] = makeDispVal(lenNumberOne-1);
+					dispVal[3] = makeDispVal(lenNumberOne - 1);
 					dispVal[2] = e;
-					dispVal[1] = makeDispVal(mod(numberOne_i/pow_dec(lenNumberOne-1)%10));
+					dispVal[1] = makeDispVal(mod(numberOne_i / pow_dec(lenNumberOne - 1) % 10));
 					dispVal[0] = minus;
 				}
 			}
@@ -351,29 +348,29 @@ void makeDisplayValue()
 					{
 						for(uint8_t j = 0; j < lenNumberOne; j++)
 						{
-							dispVal[3-j] = makeDispVal(numberOne_i/pow_dec(j)%10);
+							dispVal[3 - j] = makeDispVal(numberOne_i / pow_dec(j) % 10);
 						}
 					}
 					else
 					{
 						for(uint8_t j = 0; j < lenNumberOne; j++)
 						{
-							dispVal[lenNumberOne-j-1] = makeDispVal(numberOne_i/pow_dec(j)%10);
+							dispVal[lenNumberOne - j - 1] = makeDispVal(numberOne_i / pow_dec(j) % 10);
 						}
 						
-						dispVal[lenNumberOne-1] &= Point;
+						dispVal[lenNumberOne - 1] &= Point;
 						
-						for(uint8_t j = 0; j < 4-lenNumberOne; j++)
+						for(uint8_t j = 0; j < 4 - lenNumberOne; j++)
 						{
-							dispVal[lenNumberOne+j] = makeDispVal(digitsAfterPoint/pow_dec(getLength(digitsAfterPoint)-j-1)%10);
+							dispVal[lenNumberOne + j] = makeDispVal(digitsAfterPoint / pow_dec(getLength(digitsAfterPoint) - j - 1) % 10);
 						}
 					}
 				}
 				else
 				{
-					dispVal[3] = makeDispVal(lenNumberOne-1);
+					dispVal[3] = makeDispVal(lenNumberOne - 1);
 					dispVal[2] = e;
-					dispVal[1] = makeDispVal(numberOne_i/pow_dec(lenNumberOne-1)%10);
+					dispVal[1] = makeDispVal(numberOne_i / pow_dec(lenNumberOne - 1) % 10);
 					dispVal[0] = Nun;
 				}
 			}
@@ -387,7 +384,7 @@ void makeDisplayValue()
 
 		for(uint8_t j = 0; j < lenNumberTwo; j++)
 		{
-			dispVal[3-j] = makeDispVal(numberTwo_i/pow_dec(j)%10);
+			dispVal[3 - j] = makeDispVal(numberTwo_i / pow_dec(j) % 10);
 		}
 	}
 }
@@ -470,7 +467,7 @@ uint8_t getRow()
 	return coder((PORTE.IN & 0b11110000) >> 4);
 }
 
-int main(void)
+void init_ports()
 {
 	// определ€ет какое знакоместо будет подсвечиватьс€
 	PORTD.DIR = 0b00000001;
@@ -487,6 +484,12 @@ int main(void)
 
 	// управл€ет сегментами
 	PORTC.DIR = 0b11111111;
+}
+
+
+int main(void)
+{	
+	init_ports();
 	
 	init_timer();
 
