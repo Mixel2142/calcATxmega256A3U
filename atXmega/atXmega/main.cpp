@@ -33,7 +33,7 @@ const uint8_t keyDelay = 70;
 // задержка на индикацию нажатого действия (* / - + =)
 const uint8_t delaySign = 50;
 
-const uint8_t numb[10] = {
+const uint8_t getDispVal[10] = {
 	0b11000000, // 0
 	0b11111001, // 1
 	0b10100100, // 2
@@ -46,15 +46,17 @@ const uint8_t numb[10] = {
 	0b10010000  // 9
 };
 
-// показывает событие нажатия кнопки
+// показывает событие нажатиЯ кнопки
 bool pressKey = false;
 
-//писать в переменную numberOne
+// писать в переменную numberOne
 bool writeTo = NumOne;
+
+// индикатор делениЯ на ноль
 bool inf = false;
 
 // хранит в себе данные для вывода на дисплей
-uint8_t dispVal[4] = {Nun,Nun,Nun,numb[0]};
+uint8_t dispVal[4] = {Nun, Nun, Nun, getDispVal[0]};
 
 // переменные для хранения/записи/расчетов вычислений
 float numberOne = 0.0;
@@ -160,8 +162,7 @@ void On_C_Board(uint8_t* sign,float* number)
 	}
 	else
 	{
-		*number -= static_cast< int32_t >( *number ) % 10;
-		*number /= 10;
+		*number = static_cast< int32_t >( *number ) / 10;
 	}
 }
 
@@ -222,9 +223,8 @@ void Equ_Board(uint8_t* sign,float* number)
 	if(*sign != Equ)
 	{	
 		masSign[*sign]();
+		*sign = Equ;
 	}
-	
-	*sign = Equ;
 	
 	numberTwo = 0.0;
 }
@@ -236,11 +236,6 @@ const VoidFunPtrBoard keyBoard[4][4] = {
 	{Mul_Board,key6,key5,key4},
 	{Sub_Board,key3,key2,key1},
 	{Plus_Board,Equ_Board,key0,On_C_Board}};
-
-uint8_t makeDispVal(uint8_t num)
-{
-	return( numb[ num ] );
-}
 
 uint8_t getLength(int32_t num)
 {
@@ -263,7 +258,7 @@ int32_t mod(int32_t num)
 	return num < 0 ? num * (-1) : num;
 }
 
-// Возводит 10 в степень pw
+// возводит 10 в степень pw
 int32_t pow_dec(uint8_t pw)
 {
 	uint8_t counter = 1;
@@ -283,7 +278,7 @@ void makeDisplayValue()
 	dispVal[0] = Nun;
 	dispVal[1] = Nun;
 	dispVal[2] = Nun;
-	dispVal[3] = numb[0];
+	dispVal[3] = getDispVal[0];
 
 	if(writeTo == NumOne)
 	{
@@ -310,7 +305,7 @@ void makeDisplayValue()
 					{
 						for(uint8_t j = 0; j < lenNumberOne; j++)
 						{
-							dispVal[3 - j] = makeDispVal(mod(numberOne_i / pow_dec(j) % 10));
+							dispVal[3 - j] = getDispVal[mod(numberOne_i / pow_dec(j) % 10)];
 						}
 						
 						dispVal[3 - lenNumberOne] = minus;
@@ -319,14 +314,14 @@ void makeDisplayValue()
 					{
 						for(uint8_t j = 0; j < lenNumberOne; j++)
 						{
-							dispVal[lenNumberOne-j] = makeDispVal(mod(numberOne_i / pow_dec(j) % 10));
+							dispVal[lenNumberOne-j] = getDispVal[mod(numberOne_i / pow_dec(j) % 10)];
 						}
 						
 						dispVal[lenNumberOne] &= Point;
 						
 						for(uint8_t j = 0; j < 4 - lenNumberOne; j++)
 						{
-							dispVal[lenNumberOne + j + 1] = makeDispVal(digitsAfterPoint / pow_dec(getLength(digitsAfterPoint) - j - 1) % 10);
+							dispVal[lenNumberOne + j + 1] = getDispVal[digitsAfterPoint / pow_dec(getLength(digitsAfterPoint) - j - 1) % 10];
 						}
 						
 						dispVal[0] = minus;
@@ -334,9 +329,9 @@ void makeDisplayValue()
 				}
 				else
 				{
-					dispVal[3] = makeDispVal(lenNumberOne - 1);
+					dispVal[3] = getDispVal[lenNumberOne - 1];
 					dispVal[2] = e;
-					dispVal[1] = makeDispVal(mod(numberOne_i / pow_dec(lenNumberOne - 1) % 10));
+					dispVal[1] = getDispVal[mod(numberOne_i / pow_dec(lenNumberOne - 1) % 10)];
 					dispVal[0] = minus;
 				}
 			}
@@ -348,29 +343,29 @@ void makeDisplayValue()
 					{
 						for(uint8_t j = 0; j < lenNumberOne; j++)
 						{
-							dispVal[3 - j] = makeDispVal(numberOne_i / pow_dec(j) % 10);
+							dispVal[3 - j] = getDispVal[numberOne_i / pow_dec(j) % 10];
 						}
 					}
 					else
 					{
 						for(uint8_t j = 0; j < lenNumberOne; j++)
 						{
-							dispVal[lenNumberOne - j - 1] = makeDispVal(numberOne_i / pow_dec(j) % 10);
+							dispVal[lenNumberOne - j - 1] = getDispVal[numberOne_i / pow_dec(j) % 10];
 						}
 						
 						dispVal[lenNumberOne - 1] &= Point;
 						
 						for(uint8_t j = 0; j < 4 - lenNumberOne; j++)
 						{
-							dispVal[lenNumberOne + j] = makeDispVal(digitsAfterPoint / pow_dec(getLength(digitsAfterPoint) - j - 1) % 10);
+							dispVal[lenNumberOne + j] = getDispVal[digitsAfterPoint / pow_dec(getLength(digitsAfterPoint) - j - 1) % 10];
 						}
 					}
 				}
 				else
 				{
-					dispVal[3] = makeDispVal(lenNumberOne - 1);
+					dispVal[3] = getDispVal[lenNumberOne - 1];
 					dispVal[2] = e;
-					dispVal[1] = makeDispVal(numberOne_i / pow_dec(lenNumberOne - 1) % 10);
+					dispVal[1] = getDispVal[numberOne_i / pow_dec(lenNumberOne - 1) % 10];
 					dispVal[0] = Nun;
 				}
 			}
@@ -384,7 +379,7 @@ void makeDisplayValue()
 
 		for(uint8_t j = 0; j < lenNumberTwo; j++)
 		{
-			dispVal[3 - j] = makeDispVal(numberTwo_i / pow_dec(j) % 10);
+			dispVal[3 - j] = getDispVal[numberTwo_i / pow_dec(j) % 10];
 		}
 	}
 }
